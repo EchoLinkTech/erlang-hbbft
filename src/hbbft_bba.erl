@@ -1,6 +1,11 @@
 -module(hbbft_bba).
 
--export([init/3, input/2, handle_msg/3, serialize/1, deserialize/2]).
+-export([init/3,
+         input/2,
+         handle_msg/3,
+         serialize/1,
+         pprint/1,
+         deserialize/2]).
 
 -record(bba_data, {
           state = init :: init | waiting | done,
@@ -325,6 +330,35 @@ add_witness(Id, Value, Witness) ->
     Old = maps:get(Id, Witness, 0),
     maps:put(Id, add(Value, Old), Witness).
 
+
+-spec pprint(bba_data() | undefined) -> undefined.
+pprint(#bba_data{state=State,
+                 round=Round,
+                 coin=Coin,
+                 est=Est,
+                 output=Output,
+                 witness=Witness,
+                 aux_witness=AuxWitness,
+                 conf_witness=ConfWitness,
+                 aux_sent=AuxSent,
+                 conf_sent=ConfSent,
+                 broadcasted=Broadcasted,
+                 bin_values=BinValues}) ->
+
+    lager:debug("State:~p|Round:~p|Coin:~p|Est:~p|Output:~p|Witness:~p|AuxWitness:~p|AuxSent:~p|ConfWitness:~p|ConfSent:~p|Broadcasted:~p|BinValues:~p", [State,
+                                                                                                                                                          Round,
+                                                                                                                                                          hbbft_cc:pprint(Coin),
+                                                                                                                                                          Est,
+                                                                                                                                                          Output,
+                                                                                                                                                          Witness,
+                                                                                                                                                          AuxWitness,
+                                                                                                                                                          AuxSent,
+                                                                                                                                                          ConfWitness,
+                                                                                                                                                          ConfSent,
+                                                                                                                                                          Broadcasted,
+                                                                                                                                                          BinValues]).
+
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
@@ -336,12 +370,22 @@ init_test() ->
     gen_server:stop(dealer),
     States = [hbbft_bba:init(Sk, N, F) || Sk <- PrivateKeys],
     StatesWithId = lists:zip(lists:seq(0, length(States) - 1), States),
+
+    lists:foreach(fun({_, State}) ->
+                          pprint(State)
+                  end, StatesWithId),
+
     %% all valid members should call get_coin
     Res = lists:map(fun({J, State}) ->
                             {NewState, Result} = input(State, 1),
                             {{J, NewState}, {J, Result}}
                     end, StatesWithId),
     {NewStates, Results} = lists:unzip(Res),
+
+    lists:foreach(fun({_, State}) ->
+                          pprint(State)
+                  end, NewStates),
+
     {_, ConvergedResults} = hbbft_test_utils:do_send_outer(?MODULE, Results, NewStates, sets:new()),
     %% everyone should converge
     ?assertEqual(N, sets:size(ConvergedResults)),

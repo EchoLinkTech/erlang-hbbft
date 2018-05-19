@@ -1,6 +1,11 @@
 -module(hbbft_cc).
 
--export([init/4, get_coin/1, handle_msg/3, serialize/1, deserialize/2]).
+-export([init/4,
+         get_coin/1,
+         handle_msg/3,
+         serialize/1,
+         pprint/1,
+         deserialize/2]).
 
 -record(cc_data, {
           state = waiting :: waiting | done,
@@ -114,6 +119,12 @@ serialize_shares(Shares) ->
 -spec deserialize_shares(#{non_neg_integer() => binary()}, tpke_privkey:privkey()) -> #{non_neg_integer() => tpke_privkey:share()}.
 deserialize_shares(Shares, SK) ->
     maps:map(fun(_K, V) -> hbbft_utils:binary_to_share(V, SK) end, Shares).
+
+-spec pprint(cc_data() | undefined) -> undefined.
+pprint(undefined) -> undefined;
+pprint(#cc_data{state=State, sid=SID, shares=Shares}) ->
+    lager:debug("State:~p|Sid:~p|Shares: ~p", [State, SID, Shares]).
+
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

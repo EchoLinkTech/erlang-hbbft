@@ -10,6 +10,7 @@
          serialize/1,
          serialize/2,
          deserialize/2,
+         pprint/1,
          is_serialized/1]).
 
 -record(hbbft_data, {
@@ -326,6 +327,38 @@ serialize_hbbft_data(#hbbft_data{batch_size=BatchSize,
 -spec is_serialized(hbbft_data() | hbbft_serialized_data()) -> boolean().
 is_serialized(Data) when is_record(Data, hbbft_serialized_data) -> true;
 is_serialized(Data) when is_record(Data, hbbft_data) -> false.
+
+-spec pprint(hbbft_data() | undefined) -> undefined.
+pprint(#hbbft_data{batch_size=BatchSize,
+                   n=N,
+                   f=F,
+                   j=J,
+                   round=Round,
+                   buf=Buf,
+                   acs=ACS,
+                   acs_init=ACSInit,
+                   sent_txns=SentTxns,
+                   sent_sig=SentSig,
+                   acs_results=ACSResults,
+                   dec_shares=DecShares,
+                   decrypted=Decrypted,
+                   sig_shares=SigShares,
+                   thingtosign=ThingToSign}) ->
+    lager:debug("HBBFT_~p|BatchSize:~p|N:~p|F:~p|J:~p|Buf:~p|ACS:~p|ACSInit:~p|SentTxns:~p|SentSig:~p|ACSResults:~p|DecShares:~p|Decrypted:~p|SigShares:~p|ThingToSign:~p~n", [Round,
+                                                                                                                                                                               BatchSize,
+                                                                                                                                                                               N,
+                                                                                                                                                                               F,
+                                                                                                                                                                               J,
+                                                                                                                                                                               Buf,
+                                                                                                                                                                               hbbft_acs:pprint(ACS),
+                                                                                                                                                                               ACSInit,
+                                                                                                                                                                               SentTxns,
+                                                                                                                                                                               SentSig,
+                                                                                                                                                                               ACSResults,
+                                                                                                                                                                               DecShares,
+                                                                                                                                                                               Decrypted,
+                                                                                                                                                                               SigShares,
+                                                                                                                                                                               ThingToSign]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

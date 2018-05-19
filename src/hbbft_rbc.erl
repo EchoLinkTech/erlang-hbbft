@@ -1,6 +1,9 @@
 -module(hbbft_rbc).
 
--export([init/4, input/2, handle_msg/3]).
+-export([init/4,
+         input/2,
+         pprint/1,
+         handle_msg/3]).
 
 -record(rbc_data, {
           state = init :: init | waiting | done,
@@ -249,6 +252,29 @@ insert_once(Element, List) ->
         true -> List;
         false -> [Element | List]
     end.
+
+-spec pprint(rbc_data() | undefined) -> undefined.
+pprint(#rbc_data{
+          state=State,
+          pid=Pid,
+          leader=Leader,
+          msg=Msg,
+          num_echoes=NumEchoes,
+          num_readies=NumReadies,
+          seen_val=SeenVal,
+          ready_sent=ReadySent,
+          stripes=Stripes
+         }) ->
+    lager:debug("State:~p|Pid:~p|Leader:~p|Msg:~p|NumEchoes:~p|NumReadies:~p|SeenVal:~p|ReadySent:~p|Stripes:~p", [State,
+                                                                                                                   Pid,
+                                                                                                                   Leader,
+                                                                                                                   Msg,
+                                                                                                                   NumEchoes,
+                                                                                                                   NumReadies,
+                                                                                                                   SeenVal,
+                                                                                                                   ReadySent,
+                                                                                                                   Stripes
+                                                                                                                  ]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

@@ -1,6 +1,11 @@
 -module(hbbft_acs).
 
--export([init/4, input/2, handle_msg/3, serialize/1, deserialize/2]).
+-export([init/4,
+         input/2,
+         handle_msg/3,
+         serialize/1,
+         pprint/1,
+         deserialize/2]).
 
 -record(rbc_state, {
           rbc_data :: hbbft_rbc:rbc_data(),
@@ -241,6 +246,23 @@ serialize_bba_state(#bba_state{bba_data=BBAData, input=Input, result=Result}) ->
 -spec deserialize_bba_state(bba_serialized_state(), tpke_privkey:privkey()) -> bba_state().
 deserialize_bba_state(#bba_serialized_state{bba_data=BBAData, input=Input, result=Result}, SK) ->
     #bba_state{bba_data=hbbft_bba:deserialize(BBAData, SK), input=Input, result=Result}.
+
+-spec pprint(acs_data() | undefined) -> undefined.
+pprint(#acs_data{done=Done,
+                 rbc=RBCMap,
+                 j=J,
+                 bba=BBAMap}) ->
+
+    lists:foreach(fun({_I, _RBCState=#rbc_state{rbc_data=RBCData}}) ->
+                    lager:debug("RBCData:~p", [hbbft_rbc:pprint(RBCData)])
+                  end, maps:to_list(RBCMap)),
+
+    lists:foreach(fun({_I, _BBAState=#bba_state{bba_data=BBAData}}) ->
+                    lager:debug("BBAData:~p", [hbbft_bba:pprint(BBAData)])
+                  end, maps:to_list(BBAMap)),
+
+    lager:debug("ACS_~p|Done:~p", [J, Done]).
+
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
