@@ -63,7 +63,12 @@ init(SK, N, F) ->
 %% – bin_values  {}
 -spec input(bba_data(), 0 | 1) -> {bba_data(), ok | {send, [hbbft_utils:multicast(bval_msg())]}}.
 input(Data = #bba_data{state=init}, BInput) ->
-    {Data#bba_data{est = BInput, broadcasted=add(BInput, Data#bba_data.broadcasted), coin=hbbft_cc:init(Data#bba_data.secret_key, term_to_binary({Data#bba_data.round}), Data#bba_data.n, Data#bba_data.f)}, {send, [{multicast, {bval, Data#bba_data.round, BInput}}]}};
+    Coin = case Data#bba_data.coin of
+        undefined ->
+            hbbft_cc:init(Data#bba_data.secret_key, term_to_binary({Data#bba_data.round}), Data#bba_data.n, Data#bba_data.f);
+        C -> C
+    end,
+    {Data#bba_data{est = BInput, broadcasted=add(BInput, Data#bba_data.broadcasted), coin=Coin}, {send, [{multicast, {bval, Data#bba_data.round, BInput}}]}};
 input(Data = #bba_data{state=done}, _BInput) ->
     {Data, ok}.
 
@@ -116,6 +121,9 @@ handle_msg(Data = #bba_data{round=R, coin=Coin}, J, {{coin, R}, CMsg}) when Coin
         {NewCoin, ok} ->
             {Data#bba_data{coin=NewCoin}, ok}
     end;
+handle_msg(Data = #bba_data{round=R, coin=Coin}, J, Msg = {{coin, R}, _CMsg}) when Coin == undefined ->
+    %% we have not called input() yet this round, so we need to manually init the coin
+    handle_msg(Data#bba_data{coin=hbbft_cc:init(Data#bba_data.secret_key, term_to_binary({Data#bba_data.round}), Data#bba_data.n, Data#bba_data.f)}, J, Msg);
 handle_msg(Data, _J, _Msg) ->
     {Data, ok}.
 
