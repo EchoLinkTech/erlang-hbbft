@@ -83,10 +83,18 @@ handle_msg(Data = #bba_data{state=done}, _J, _BInput) ->
     {Data, ok};
 handle_msg(Data = #bba_data{round=R}, J, {bval, R, V}) ->
     bval(Data, J, V);
-handle_msg(Data = #bba_data{round=_R}, J, {aux, _R, V}) ->
+handle_msg(Data = #bba_data{round=R}, J, {aux, R, V}) ->
     aux(Data, J, V);
-handle_msg(Data = #bba_data{round=_R}, J, {conf, _R, V}) ->
+handle_msg(Data = #bba_data{round=R}, J, {conf, R, V}) ->
     conf(Data, J, V);
+handle_msg(Data = #bba_data{round=R}, _J, {bval, R2, _V}) when R2 > R ->
+    {Data, defer};
+handle_msg(Data = #bba_data{round=R}, _J, {aux, R2, _V}) when R2 > R ->
+    {Data, defer};
+handle_msg(Data = #bba_data{round=R}, _J, {conf, R2, _V}) when R2 > R ->
+    {Data, defer};
+handle_msg(Data = #bba_data{round=R}, _J, {{coin, R2}, _CMsg}) when R2 > R ->
+    {Data, defer};
 handle_msg(Data = #bba_data{round=R, coin=Coin}, J, {{coin, R}, CMsg}) when Coin /= undefined ->
     %% dispatch the message to the nested coin protocol
     case hbbft_cc:handle_msg(Data#bba_data.coin, J, CMsg) of

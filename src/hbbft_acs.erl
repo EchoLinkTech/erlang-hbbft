@@ -132,7 +132,9 @@ handle_msg(Data = #acs_data{n=N, f=F}, J, {{bba, I}, BBAMsg}) ->
                     check_completion(NewData)
             end;
         {NewBBA, ok} ->
-            {store_bba_state(Data, I, NewBBA), ok}
+            {store_bba_state(Data, I, NewBBA), ok};
+        {NewBBA, defer} ->
+            {store_bba_state(Data, I, NewBBA), defer}
     end.
 
 check_completion(Data = #acs_data{n=N}) ->
